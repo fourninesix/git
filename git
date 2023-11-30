@@ -52,29 +52,33 @@ change_id() {
 }
 
 git_alias() {
-	alias_list=(
-		c "commit -s"
-		cam "commit --am"
-		cm "commit"
-		csm "commit -s -m"
-		ca "cherry-pick --abort"
-		cr "cherry-pick --signoff"
-		p "push -f"
-		cc "cherry-pick --continue"
-		cs "cherry-pick --skip"
-		cp "cherry-pick"
-		r "revert"
-		rc "revert --continue"
-		ro "remote rm origin"
-		ra "remote add origin"
-		s "switch -c"
-		b "branch"
-		rh "reset --hard"
-		ch "checkout"
-		f "fetch"
-		m "merge"
+	declare -A alias_list=(
+		[c]="commit -s"
+		[cam]="commit --am"
+		[cm]="commit"
+		[csm]="commit -s -m"
+		[ca]="cherry-pick --abort"
+		[cr]="cherry-pick --signoff"
+		[p]="push -f"
+		[cc]="cherry-pick --continue"
+		[cs]="cherry-pick --skip"
+		[cp]="cherry-pick"
+		[r]="revert"
+		[rc]="revert --continue"
+		[ro]="remote rm origin"
+		[ra]="remote add origin"
+		[s]="switch -c"
+		[b]="branch"
+		[rh]="reset --hard"
+		[ch]="checkout"
+		[f]="fetch"
+		[m]="merge"
 	)
-	git config --global alias.${alias_list}
+
+	# Set up each alias
+	for key in "${!alias_list[@]}"; do
+		git config --global alias."$key" "${alias_list[$key]}"
+	done
 }
 git_credentials() {
 	sync
@@ -85,7 +89,7 @@ git_credentials() {
 	git config --global credential.helper "store --file ~/.git-credentials"
 }
 
-gpg() {
+gpg-keys() {
 	if [ ! -d "gpg" ]; then
 		mkdir gpg
 		wget https://raw.githubusercontent.com/Kizziama/git/main/gpg/public.gpg -O gpg/public.gpg
@@ -97,41 +101,50 @@ gpg() {
 	gpg --import-ownertrust gpg/trust.gpg
 	git config --global user.signingkey "9A13029BC9453365"
 	git config --global commit.gpgsign true
-	echo "export GPG_TTY=$(tty)" >>~/.bashrc
+	if [ ! -f "~/.bashrc" ]; then
+		touch ~/.bashrc
+		echo 'export GPG_TTY=$(tty)' >>~/.bashrc
+	else
+		sed -i -e '$a\' -e 'export GPG_TTY=$(tty)' ~/.bashrc
+	fi
 	source ~/.bashrc
 }
 
-while [[ $# -gt 0 ]]; do
-	case $1 in
-	-A | --alias)
-		git_alias
-		shift
-		;;
-	-C | --creds)
-		git_credentials
-		shift
-		;;
-	-G | --gpg)
-		gpg
-		shift
-		;;
-	-I | --change-id)
-		change_id
-		shift
-		;;
-	-S | --sync)
-		sync
-		shift
-		;;
-	-H | --help)
-		show_ascii
-		show_help
-		exit 0
-		;;
-	*)
-		echo "Unknown option: $1"
-		show_help
-		exit 1
-		;;
-	esac
-done
+options() {
+	while [[ $# -gt 0 ]]; do
+		case $1 in
+		-A | --alias)
+			git_alias
+			shift
+			;;
+		-C | --creds)
+			git_credentials
+			shift
+			;;
+		-G | --gpg-keys)
+			gpg-keys
+			shift
+			;;
+		-I | --change-id)
+			change_id
+			shift
+			;;
+		-S | --sync)
+			sync
+			shift
+			;;
+		-H | --help)
+			show_ascii
+			show_help
+			exit 0
+			;;
+		*)
+			echo "Unknown option: $1"
+			show_help
+			exit 1
+			;;
+		esac
+	done
+}
+
+options "$@"
