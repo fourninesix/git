@@ -5,54 +5,87 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-set -e
+Y='\033[1;33m'
+W='\033[1;37m'
 
-# Git identity
-GIT_USER="Kizziama"
-GIT_EMAIL="kizziama@proton.me"
-git config --global user.name "$GIT_USER"
-git config --global user.email "$GIT_EMAIL"
+show_ascii() {
+	echo -e "$Y ╭╮╭━┳━━┳━━━━┳━━━━┳━━┳━━━┳━╮╭━┳━━━╮ "
+	echo -e "$Y ┃┃┃╭┻┫┣┻━━╮━┣━━╮━┣┫┣┫╭━╮┃┃╰╯┃┃╭━╮┃ "
+	echo -e "$Y ┃╰╯╯╱┃┃╱╱╭╯╭╯╱╭╯╭╯┃┃┃┃╱┃┃╭╮╭╮┃┃╱┃┃ "
+	echo -e "$Y ┃╭╮┃╱┃┃╱╭╯╭╯╱╭╯╭╯╱┃┃┃╰━╯┃┃┃┃┃┃╰━╯┃ "
+	echo -e "$Y ┃┃┃╰┳┫┣┳╯━╰━┳╯━╰━┳┫┣┫╭━╮┃┃┃┃┃┃╭━╮┃ "
+	echo -e "$Y ╰╯╰━┻━━┻━━━━┻━━━━┻━━┻╯╱╰┻╯╰╯╰┻╯╱╰╯ "
+}
 
-# Git alias
-git config --global alias.c "commit -s"
-git config --global alias.cam "commit --am"
-git config --global alias.cm "commit"
-git config --global alias.csm "commit -s -m"
-git config --global alias.ca "cherry-pick --abort"
-git config --global alias.cr "cherry-pick --signoff"
-git config --global alias.p "push -f"
-git config --global alias.cc "cherry-pick --continue"
-git config --global alias.cs "cherry-pick --skip"
-git config --global alias.cp "cherry-pick"
-git config --global alias.r "revert"
-git config --global alias.rc "revert --continue"
-git config --global alias.ro "remote rm origin"
-git config --global alias.ra "remote add origin"
-git config --global alias.s "switch -c"
-git config --global alias.b "branch"
-git config --global alias.rh "reset --hard"
-git config --global alias.ch "checkout"
-git config --global alias.f "fetch"
-git config --global alias.m "merge"
+show_help() {
+	echo -e "$W Usage: $0 [options]"
+	echo -e "$W Options:"
+	echo -e "$W  -A, --alias    Configure Git Alias"
+	echo -e "$W  -C, --creds    Configure Git credentials"
+	echo -e "$W  -G, --gpg      Configure GPG for signing commits"
+	echo -e "$W  -I, --chang-id Configure Change-id Hooks"
+	echo -e "$W  -S, --sync     Configure Git Identity"
+	echo -e "$W  -H, --help     Display this help message"
+}
 
-# Change-id hooks
-mkdir -p ~/.git/hooks
-git config --global core.hooksPath ~/.git/hooks
-curl -Lo ~/.git/hooks/commit-msg http://review.lineageos.org/tools/hooks/commit-msg
-chmod a+x ~/.git/hooks/commit-msg
+sync() {
+	GIT_USER="Kizziama"
+	GIT_EMAIL="kizziama@proton.me"
+	echo -n "[!] Enter your Git user (default: $GIT_USER): "
+	read -r user_input
+	[ -n "$user_input" ] && GIT_USER="$user_input"
+	echo -n "[!] Enter your Git email (default: $GIT_EMAIL): "
+	read -r email_input
+	[ -n "$email_input" ] && GIT_EMAIL="$email_input"
+	git config --global user.name "$GIT_USER"
+	git config --global user.email "$GIT_EMAIL"
+	echo -e "$W Git user set to: $GIT_USER"
+	echo -e "$W Git email set to: $GIT_EMAIL"
+	echo -e "$W Git configuration synced successfully."
+}
 
-# Git credentials
-if [ "$1" == "creds" ]; then
-	if [ ! -f "~/.git-credentials" ]; then
-		echo "[!] Enter your git token"
-		read git_token
-		GIT_TOKEN="$git_token"
-		echo "https://$GIT_USER:$GIT_TOKEN@github.com" >~/.git-credentials
-		git config --global credential.helper "store --file ~/.git-credentials"
-	fi
-fi
+change_id() {
+	mkdir -p ~/.git/hooks
+	git config --global core.hooksPath ~/.git/hooks
+	curl -Lo ~/.git/hooks/commit-msg http://review.lineageos.org/tools/hooks/commit-msg
+	chmod a+x ~/.git/hooks/commit-msg
+}
 
-if [ "$1" == "gpg" ]; then
+git_alias() {
+	alias_list=(
+		c "commit -s"
+		cam "commit --am"
+		cm "commit"
+		csm "commit -s -m"
+		ca "cherry-pick --abort"
+		cr "cherry-pick --signoff"
+		p "push -f"
+		cc "cherry-pick --continue"
+		cs "cherry-pick --skip"
+		cp "cherry-pick"
+		r "revert"
+		rc "revert --continue"
+		ro "remote rm origin"
+		ra "remote add origin"
+		s "switch -c"
+		b "branch"
+		rh "reset --hard"
+		ch "checkout"
+		f "fetch"
+		m "merge"
+	)
+	git config --global alias.${alias_list}
+}
+git_credentials() {
+	sync
+	echo "[!] Enter your git token"
+	read -r git_token
+	GIT_TOKEN="$git_token"
+	echo "https://$GIT_USER:$GIT_TOKEN@github.com" >~/.git-credentials
+	git config --global credential.helper "store --file ~/.git-credentials"
+}
+
+gpg() {
 	if [ ! -d "gpg" ]; then
 		mkdir gpg
 		wget https://raw.githubusercontent.com/Kizziama/git/main/gpg/public.gpg -O gpg/public.gpg
@@ -66,4 +99,39 @@ if [ "$1" == "gpg" ]; then
 	git config --global commit.gpgsign true
 	echo "export GPG_TTY=$(tty)" >>~/.bashrc
 	source ~/.bashrc
-fi
+}
+
+while [[ $# -gt 0 ]]; do
+	case $1 in
+	-A | --alias)
+		git_alias
+		shift
+		;;
+	-C | --creds)
+		git_credentials
+		shift
+		;;
+	-G | --gpg)
+		gpg
+		shift
+		;;
+	-I | --change-id)
+		change_id
+		shift
+		;;
+	-S | --sync)
+		sync
+		shift
+		;;
+	-H | --help)
+		show_ascii
+		show_help
+		exit 0
+		;;
+	*)
+		echo "Unknown option: $1"
+		show_help
+		exit 1
+		;;
+	esac
+done
