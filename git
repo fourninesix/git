@@ -92,13 +92,9 @@ git_credentials() {
 gpg-keys() {
 	if [ ! -d "gpg" ]; then
 		mkdir gpg
-		wget https://raw.githubusercontent.com/Kizziama/git/main/gpg/public.gpg -O gpg/public.gpg
-		wget https://raw.githubusercontent.com/Kizziama/git/main/gpg/private.gpg -O gpg/private.gpg
-		wget https://raw.githubusercontent.com/Kizziama/git/main/gpg/trust.gpg -O gpg/trust.gpg
+		wget https://raw.githubusercontent.com/Kizziama/git/main/gpg/private.key -O gpg/private.key
 	fi
-	gpg --import gpg/public.gpg
-	gpg --import gpg/private.gpg
-	gpg --import-ownertrust gpg/trust.gpg
+	gpg --import gpg/private.key
 	git config --global user.signingkey "9A13029BC9453365"
 	git config --global commit.gpgsign true
 	if [ ! -f "~/.bashrc" ]; then
