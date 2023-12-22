@@ -47,7 +47,7 @@ sync() {
 change_id() {
 	mkdir -p ~/.git/hooks
 	git config --global core.hooksPath ~/.git/hooks
-	curl -Lo ~/.git/hooks/commit-msg http://review.lineageos.org/tools/hooks/commit-msg
+	curl -Lo ~/.git/hooks/commit-msg https://raw.githubusercontent.com/Kizziama/git/main/commit-msg
 	chmod a+x ~/.git/hooks/commit-msg
 }
 
