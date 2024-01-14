@@ -97,13 +97,6 @@ gpg-keys() {
 	gpg --import gpg/private.key
 	git config --global user.signingkey "9A13029BC9453365"
 	git config --global commit.gpgsign true
-	if [ ! -f "~/.bashrc" ]; then
-		touch ~/.bashrc
-		echo 'export GPG_TTY=$(tty)' >>~/.bashrc
-	else
-		sed -i -e '$a\' -e 'export GPG_TTY=$(tty)' ~/.bashrc
-	fi
-	source ~/.bashrc
 }
 
 options() {
